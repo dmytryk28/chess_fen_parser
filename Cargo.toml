@@ -1,0 +1,12 @@
+[package]
+name = "chess_fen_parser"
+version = "0.1.0"
+edition = "2024"
+license="MIT"
+description="Parser for Forsyth-Edwards Notation."
+
+[dependencies]
+anyhow = "1.0"
+pest = "^2.8"
+pest_derive = "^2.8"
+thiserror = "2.0.17"

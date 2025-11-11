@@ -2,8 +2,9 @@
 name = "chess_fen_parser"
 version = "0.1.0"
 edition = "2024"
-license="MIT"
-description="Parser for Forsyth-Edwards Notation."
+license = "MIT"
+description = "Parser for Forsyth-Edwards Notation."
+repository = "https://github.com/dmytryk28/chess_fen_parser"
 
 [dependencies]
 anyhow = "1.0"

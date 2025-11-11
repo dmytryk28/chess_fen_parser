@@ -1,89 +1,51 @@
 use chess_fen_parser::*;
-use std::{env, fs};
+use clap::{Parser, Subcommand};
+use std::{fs, path::PathBuf, process::exit};
+
+#[derive(Parser)]
+#[command(
+    name = "chess_fen_parser",
+    about = "Parser for Forsyth-Edwards Notation."
+)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    Parse { file: PathBuf },
+    Credits,
+}
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 2 {
-        print_help();
-        return;
-    }
-    match args[1].as_str() {
-        "help" => {
-            print_help();
-            return;
-        },
-        "parse-string" => {
-            if args.len() < 3 {
-                eprintln!("There is no FEN string for parse-string");
-                print_help();
-                return;
-            } else {
-                let fen = &args[2];
-                cmd_parse_string(fen);
-                return;
+    match Cli::parse().command {
+        Commands::Credits => {
+            println!("chess_fen_parser v0.1.0");
+            println!("Author: Dmytro Shvets");
+        }
+        Commands::Parse { file } => {
+            let content = match fs::read_to_string(&file) {
+                Ok(s) => s,
+                Err(e) => {
+                    eprintln!("Failed to read '{}': {}", file.display(), e);
+                    exit(1);
+                }
+            };
+
+            let line = content.lines().find(|l| !l.trim().is_empty()).unwrap_or("");
+            if line.is_empty() {
+                eprintln!("File '{}' contains no valid FEN string", file.display());
+                exit(1);
             }
-        },
-        "parse-file" => {
-            if args.len() < 3 {
-                eprintln!("There is no file path for parse-file");
-                print_help();
-                return;
-            } else {
-                let path = &args[2];
-                cmd_parse_file(path);
-                return;
+
+            match parse_fen(line) {
+                Ok(fen) => print_parsing_results(&fen),
+                Err(e) => {
+                    eprintln!("Error parsing FEN: {}", e);
+                    exit(2);
+                }
             }
-        },
-        "credits" => {
-            print_credits();
-            return;
-        },
-        other => {
-            eprintln!("Unknown command: {}\n", other);
-            print_help();
-            return;
         }
     }
-}
-
-fn print_help() {
-    println!("Commands:");
-    println!("    parse-file <path>   Parse FEN from a text file");
-    println!("    parse-string <fen>  Parse FEN from the provided string (in quotes)");
-    println!("    help                Show this help message");
-    println!("    credits             Show credits information");
-}
-
-fn cmd_parse_string(fen_str: &str) {
-    match parse_fen(fen_str) {
-        Ok(fen_data) => {
-            print_parsing_results(&fen_data);
-        },
-        Err(e) => {
-            eprintln!("Error parsing FEN: {}", e);
-        }
-    }
-}
-
-fn cmd_parse_file(path: &str) {
-    let pb = std::path::PathBuf::from(path);
-    match fs::read_to_string(pb.clone()) {
-        Ok(contents) => {
-            if let Some(line) = contents.lines().find(|l| !l.trim().is_empty()) {
-                cmd_parse_string(line);
-                return;
-            } else {
-                eprintln!("File '{}' contains no valid FEN string", pb.display());
-                return;
-            }
-        },
-        Err(e) => {
-            eprintln!("Failed to read file '{}': {}", pb.display(), e);
-            return;
-        }
-    }
-}
-
-fn print_credits() {
-    println!("Author: Dmytro Shvets");
 }

@@ -29,24 +29,44 @@ This project uses the pest parser and a custom grammar in src/fen.pest to parse 
 ## Grammar (src/fen.pest)
 ```pest
 piece = { "p" | "r" | "n" | "b" | "q" | "k" | "P" | "R" | "N" | "B" | "Q" | "K" }
+
 active_color = { "w" | "b" }
+
 castling = { "-" | ("K" | "Q" | "k" | "q")+ }
+
 rank_digit = { '1'..'8' }
-rank = { ( piece | rank_digit )+ }
-piece_placement = { rank ~ ("/" ~ rank){7} }
+
+rank = {
+    ( piece | rank_digit )+
+}
+
+piece_placement = {
+    rank ~ ("/" ~ rank){7}
+}
+
 square = { 'a'..'h' ~ rank_digit }
+
 en_passant = { "-" | square }
+
 halfmove = @{ ASCII_DIGIT+ }
+
 fullmove = @{ ASCII_DIGIT+ }
-fen = { SOI ~ piece_placement ~ " " ~ active_color ~ " " ~ castling ~ " " ~ en_passant ~ " " ~ halfmove ~ " " ~ fullmove ~ EOI }
+
+fen = {
+    SOI ~ piece_placement ~ " "
+    ~ active_color ~ " "
+    ~ castling ~ " "
+    ~ en_passant ~ " "
+    ~ halfmove ~ " "
+    ~ fullmove ~ EOI
+}
 ```
 
 ## Usage
 - Library: call parse_fen("<fen string>") to obtain a Fen value.
 
 - CLI:
-  - cargo run -- parse-string "<fen>"
-  - cargo run -- parse-file <path-to-text-file>
+  - cargo run -- parse <path-to-text-file>
 
 ## Examples
 - The starting position:

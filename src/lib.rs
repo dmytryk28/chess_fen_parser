@@ -1,8 +1,9 @@
-use pest::iterators::Pair;
+#![doc = include_str!("../README.md")]
 use pest::Parser as PestParser;
+use pest::iterators::Pair;
 use pest_derive::Parser;
-use thiserror::Error;
 use std::collections::BTreeMap;
+use thiserror::Error;
 
 #[derive(Parser)]
 #[grammar = "fen.pest"]
@@ -11,7 +12,7 @@ pub struct FenParser;
 #[derive(Debug)]
 pub enum Color {
     White,
-    Black
+    Black,
 }
 
 #[derive(Debug)]
@@ -21,13 +22,13 @@ pub enum PieceKind {
     Knight,
     Bishop,
     Queen,
-    King
+    King,
 }
 
 #[derive(Debug)]
 pub struct Piece {
     pub kind: PieceKind,
-    pub color: Color
+    pub color: Color,
 }
 
 #[derive(Debug)]
@@ -35,7 +36,7 @@ pub struct Castlings {
     pub white_short: bool,
     pub white_long: bool,
     pub black_short: bool,
-    pub black_long: bool
+    pub black_long: bool,
 }
 
 #[derive(Debug)]
@@ -45,13 +46,13 @@ pub struct Fen {
     pub castling: Castlings,
     pub en_passant: Option<String>,
     pub halfmove_clock: u16,
-    pub fullmove_number: u16
+    pub fullmove_number: u16,
 }
 
 #[derive(Error, Debug)]
 pub enum FenError {
     #[error("parse error: {0}")]
-    ParseError(#[from] pest::error::Error<Rule>),
+    ParseError(#[from] Box<pest::error::Error<Rule>>),
     #[error("invalid rank length: {0}")]
     InvalidRankLength(usize),
     #[error("invalid rank count: {0}")]
@@ -62,17 +63,27 @@ pub enum FenError {
     InvalidNumber(#[from] std::num::ParseIntError),
 }
 
+impl From<pest::error::Error<Rule>> for FenError {
+    fn from(e: pest::error::Error<Rule>) -> Self {
+        FenError::ParseError(Box::new(e))
+    }
+}
+
 fn parse_piece(pair: Pair<Rule>) -> Result<Piece, FenError> {
     let s = pair.as_str();
     let ch = s.chars().next().unwrap();
-    let color = if ch.is_uppercase() { Color::White } else { Color::Black };
+    let color = if ch.is_uppercase() {
+        Color::White
+    } else {
+        Color::Black
+    };
     let kind = match ch.to_ascii_lowercase() {
         'p' => PieceKind::Pawn,
         'r' => PieceKind::Rook,
         'n' => PieceKind::Knight,
         'b' => PieceKind::Bishop,
         'q' => PieceKind::Queen,
-        _ => PieceKind::King
+        _ => PieceKind::King,
     };
     Ok(Piece { kind, color })
 }
@@ -101,7 +112,12 @@ fn expand_rank(pair: Pair<Rule>) -> Result<Vec<Option<Piece>>, FenError> {
 }
 
 fn parse_castling(s: &str) -> Result<Castlings, FenError> {
-    let mut rights = Castlings { white_short: false, white_long: false, black_short: false, black_long: false };
+    let mut rights = Castlings {
+        white_short: false,
+        white_long: false,
+        black_short: false,
+        black_long: false,
+    };
     if s == "-" {
         return Ok(rights);
     }
@@ -137,7 +153,7 @@ pub fn parse_fen(input: &str) -> Result<Fen, FenError> {
     }
     let active_color = match active_color_pair.as_str() {
         "w" => Color::White,
-        _ => Color::Black
+        _ => Color::Black,
     };
     let castling = parse_castling(castling_pair.as_str())?;
     let en_passant = if en_passant_pair.as_str() == "-" {
@@ -148,7 +164,14 @@ pub fn parse_fen(input: &str) -> Result<Fen, FenError> {
     let halfmove_clock = halfmove_pair.as_str().parse::<u16>()?;
     let fullmove_number = fullmove_pair.as_str().parse::<u16>()?;
 
-    Ok(Fen { board, active_color, castling, en_passant, halfmove_clock, fullmove_number })
+    Ok(Fen {
+        board,
+        active_color,
+        castling,
+        en_passant,
+        halfmove_clock,
+        fullmove_number,
+    })
 }
 
 pub fn coord_from_rf(r: usize, f: usize) -> String {
@@ -157,7 +180,9 @@ pub fn coord_from_rf(r: usize, f: usize) -> String {
     format!("{}{}", file, rank)
 }
 
-pub fn collect_positions(fen: &Fen) -> (BTreeMap<String, Vec<String>>, BTreeMap<String, Vec<String>>) {
+pub fn collect_positions(
+    fen: &Fen,
+) -> (BTreeMap<String, Vec<String>>, BTreeMap<String, Vec<String>>) {
     let mut white: BTreeMap<String, Vec<String>> = BTreeMap::new();
     let mut black: BTreeMap<String, Vec<String>> = BTreeMap::new();
     for r in 0..8 {
@@ -179,18 +204,32 @@ pub fn collect_positions(fen: &Fen) -> (BTreeMap<String, Vec<String>>, BTreeMap<
             }
         }
     }
-    for v in white.values_mut() { v.sort(); }
-    for v in black.values_mut() { v.sort(); }
+    for v in white.values_mut() {
+        v.sort();
+    }
+    for v in black.values_mut() {
+        v.sort();
+    }
     (white, black)
 }
 
 pub fn castling_string(c: &Castlings) -> String {
     let mut s = String::new();
-    if c.white_short { s.push('K'); }
-    if c.white_long  { s.push('Q'); }
-    if c.black_short { s.push('k'); }
-    if c.black_long  { s.push('q'); }
-    if s.is_empty() { s.push('-'); }
+    if c.white_short {
+        s.push('K');
+    }
+    if c.white_long {
+        s.push('Q');
+    }
+    if c.black_short {
+        s.push('k');
+    }
+    if c.black_long {
+        s.push('q');
+    }
+    if s.is_empty() {
+        s.push('-');
+    }
     s
 }
 
@@ -198,12 +237,20 @@ pub fn castling_for_side(c: &Castlings, color: Color) -> String {
     let mut parts: Vec<&str> = Vec::new();
     match color {
         Color::White => {
-            if c.white_long { parts.push("long"); }
-            if c.white_short { parts.push("short"); }
+            if c.white_long {
+                parts.push("long");
+            }
+            if c.white_short {
+                parts.push("short");
+            }
         }
         Color::Black => {
-            if c.black_long { parts.push("long"); }
-            if c.black_short { parts.push("short"); }
+            if c.black_long {
+                parts.push("long");
+            }
+            if c.black_short {
+                parts.push("short");
+            }
         }
     }
     if parts.is_empty() {
@@ -218,7 +265,7 @@ fn print_side(
     map: &BTreeMap<String, Vec<String>>,
     castlings: &Castlings,
     color: Color,
-    divider: &str
+    divider: &str,
 ) {
     let pieces: [&str; 6] = ["pawn", "rook", "knight", "bishop", "queen", "king"];
     println!("{}", header);
@@ -240,8 +287,17 @@ pub fn print_parsing_results(fen: &Fen) {
     let (white, black) = collect_positions(fen);
     print_side("White:", &white, &fen.castling, Color::White, divider);
     print_side("Black:", &black, &fen.castling, Color::Black, divider);
-    println!("Active color: {}", match fen.active_color { Color::White => "White", Color::Black => "Black" });
-    println!("En passant: {}", fen.en_passant.clone().unwrap_or_else(|| "-".to_string()));
+    println!(
+        "Active color: {}",
+        match fen.active_color {
+            Color::White => "White",
+            Color::Black => "Black",
+        }
+    );
+    println!(
+        "En passant: {}",
+        fen.en_passant.clone().unwrap_or_else(|| "-".to_string())
+    );
     println!("Halfmove clock: {}", fen.halfmove_clock);
     println!("Fullmove number: {}", fen.fullmove_number);
     println!("{}\n", divider);

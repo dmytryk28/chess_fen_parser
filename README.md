@@ -66,7 +66,7 @@ fen = {
 - Library: call parse_fen("<fen string>") to obtain a Fen value.
 
 - CLI:
-  - cargo run -- parse <path-to-text-file>
+  - cargo run -- parse example_fen.txt
 
 ## Examples
 - The starting position:

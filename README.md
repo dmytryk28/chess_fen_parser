@@ -3,6 +3,8 @@
 A library to parse [Forsyth–Edwards Notation](https://www.chess.com/terms/fen-chess) (FEN) strings for chess positions.
 The library provides a parser that converts a FEN string into a structured Fen value to present the parsed information in an expanded form (piece lists for each side, castling rights, target on passage, move counters).
 
+Crates.io: https://crates.io/crates/chess_fen_parser
+
 ## Description
 This project uses the pest parser and a custom grammar in src/fen.pest to parse complete FEN strings according to the standard field structure. The main parsing logic is implemented in src/lib.rs.
 

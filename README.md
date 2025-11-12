@@ -4,6 +4,7 @@ A library to parse [Forsyth–Edwards Notation](https://www.chess.com/terms/fen-
 The library provides a parser that converts a FEN string into a structured Fen value to present the parsed information in an expanded form (piece lists for each side, castling rights, target on passage, move counters).
 
 Crates.io: https://crates.io/crates/chess_fen_parser
+
 Docs: https://docs.rs/chess_fen_parser
 
 ## Description

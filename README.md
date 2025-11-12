@@ -4,6 +4,7 @@ A library to parse [Forsyth–Edwards Notation](https://www.chess.com/terms/fen-
 The library provides a parser that converts a FEN string into a structured Fen value to present the parsed information in an expanded form (piece lists for each side, castling rights, target on passage, move counters).
 
 Crates.io: https://crates.io/crates/chess_fen_parser
+Docs: https://docs.rs/chess_fen_parser
 
 ## Description
 This project uses the pest parser and a custom grammar in src/fen.pest to parse complete FEN strings according to the standard field structure. The main parsing logic is implemented in src/lib.rs.
@@ -38,13 +39,9 @@ castling = { "-" | ("K" | "Q" | "k" | "q")+ }
 
 rank_digit = { '1'..'8' }
 
-rank = {
-    ( piece | rank_digit )+
-}
+rank = { ( piece | rank_digit )+ }
 
-piece_placement = {
-    rank ~ ("/" ~ rank){7}
-}
+piece_placement = { rank ~ ("/" ~ rank){7} }
 
 square = { 'a'..'h' ~ rank_digit }
 
@@ -54,13 +51,31 @@ halfmove = @{ ASCII_DIGIT+ }
 
 fullmove = @{ ASCII_DIGIT+ }
 
-fen = {
-    SOI ~ piece_placement ~ " "
+event_tag = { "[Event" ~ " \"" ~ (!"\"" ~ ANY)* ~ "\"]" }
+
+white_tag = { "[White" ~ " \"" ~ (!"\"" ~ ANY)* ~ "\"]" }
+
+black_tag = { "[Black" ~ " \"" ~ (!"\"" ~ ANY)* ~ "\"]" }
+
+comment = { "{" ~ (!"}" ~ ANY)* ~ "}" }
+
+fen_core = {
+    piece_placement ~ " "
     ~ active_color ~ " "
     ~ castling ~ " "
     ~ en_passant ~ " "
     ~ halfmove ~ " "
-    ~ fullmove ~ EOI
+    ~ fullmove
+}
+
+fen_record = {
+    SOI
+    ~ event_tag? ~ NEWLINE*
+    ~ white_tag? ~ NEWLINE*
+    ~ black_tag? ~ NEWLINE*
+    ~ fen_core
+    ~ (NEWLINE* ~ comment)?
+    ~ EOI
 }
 ```
 
@@ -79,6 +94,13 @@ fen = {
 
 - An en passant example:
   8/8/8/3pP3/8/8/8/8 b - e3 0 1
+
+- FEN with tags and comment:
+  [Event "Casual Game"]
+  [White "Alice"]
+  [Black "Bob"]
+  rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+  {This is the starting position}
 
 ## How parsed results can be used
 The parsed FEN is returned as a Fen object that can be displayed, serialized, or processed.

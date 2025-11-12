@@ -32,14 +32,12 @@ fn main() {
                     exit(1);
                 }
             };
-
-            let line = content.lines().find(|l| !l.trim().is_empty()).unwrap_or("");
-            if line.is_empty() {
+            let input = content.trim();
+            if input.is_empty() {
                 eprintln!("File '{}' contains no valid FEN string", file.display());
                 exit(1);
             }
-
-            match parse_fen(line) {
+            match parse_fen(input) {
                 Ok(fen) => print_parsing_results(&fen),
                 Err(e) => {
                     eprintln!("Error parsing FEN: {}", e);

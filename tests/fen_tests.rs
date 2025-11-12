@@ -127,14 +127,87 @@ fn fullmove_rule() -> Result<()> {
 }
 
 #[test]
-fn fen_rule() -> Result<()> {
+fn fen_core_rule() -> Result<()> {
     let inputs = [
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         "r3k2r/8/8/8/8/8/8/R3K2R b Qk - 5 20",
         "8/8/8/3pP3/8/8/8/8 w - d6 0 10",
     ];
     for input in inputs {
-        let res = FenParser::parse(Rule::fen, input)?
+        let res = FenParser::parse(Rule::fen_core, input)?
+            .next()
+            .ok_or(anyhow!("No pair"))?;
+        assert_eq!(res.as_str(), input);
+    }
+    Ok(())
+}
+
+#[test]
+fn event_tag_rule() -> Result<()> {
+    let inputs = [
+        "[Event \"World Championship\"]",
+        "[Event \"Rapid Cup 2025\"]",
+    ];
+    for input in inputs {
+        let res = FenParser::parse(Rule::event_tag, input)?
+            .next()
+            .ok_or(anyhow!("No pair"))?;
+        assert_eq!(res.as_str(), input);
+    }
+    Ok(())
+}
+
+#[test]
+fn white_tag_rule() -> Result<()> {
+    let inputs = ["[White \"Magnus Carlsen\"]", "[White \"Hikaru Nakamura\"]"];
+    for input in inputs {
+        let res = FenParser::parse(Rule::white_tag, input)?
+            .next()
+            .ok_or(anyhow!("No pair"))?;
+        assert_eq!(res.as_str(), input);
+    }
+    Ok(())
+}
+
+#[test]
+fn black_tag_rule() -> Result<()> {
+    let inputs = [
+        "[Black \"Ian Nepomniachtchi\"]",
+        "[Black \"Fabiano Caruana\"]",
+    ];
+    for input in inputs {
+        let res = FenParser::parse(Rule::black_tag, input)?
+            .next()
+            .ok_or(anyhow!("No pair"))?;
+        assert_eq!(res.as_str(), input);
+    }
+    Ok(())
+}
+
+#[test]
+fn comment_rule() -> Result<()> {
+    let inputs = [
+        "{This position is from round 3}",
+        "{Opening preparation line}",
+        "{White has a strong center here.}",
+    ];
+    for input in inputs {
+        let res = FenParser::parse(Rule::comment, input)?
+            .next()
+            .ok_or(anyhow!("No pair"))?;
+        assert_eq!(res.as_str(), input);
+    }
+    Ok(())
+}
+
+#[test]
+fn fen_record_rule() -> Result<()> {
+    let inputs = [
+        "[Event \"World Championship\"]\n[White \"Magnus Carlsen\"]\n[Black \"Ian Nepomniachtchi\"]\nrnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1\n{Opening position}",
+        "[Event \"Rapid Cup 2025\"]\nr3k2r/8/8/8/8/8/8/R3K2R b Qk - 5 20",
+    ];
+    for input in inputs {
+        let res = FenParser::parse(Rule::fen_record, input)?
             .next()
             .ok_or(anyhow!("No pair"))?;
         assert_eq!(res.as_str(), input);
